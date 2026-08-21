@@ -53,13 +53,13 @@ export async function runDecisionAI(ctx: AgentContext) {
   const novelData = await u.db("o_novel").where("projectId", resTool.data.projectId).select("chapterIndex");
 
   const projectInfo = [
-    "## 项目信息",
-    `小说名称：${projectData?.name ?? "未知"}`,
-    `小说类型：${projectData?.type ?? "未知"}`,
-    `小说简介：${projectData?.intro ?? "无"}`,
-    `目标改编影视视觉手册|画风：${projectData?.artStyle ?? "无"}`,
-    `目标改编视频画幅：${projectData?.videoRatio ?? "16:9"}`,
-    `章节数量：${novelData.length}章`,
+    "## 课程信息",
+    `课程名称：${projectData?.name ?? "未知"}`,
+    `课程类型：${projectData?.type ?? "未知"}`,
+    `课程简介：${projectData?.intro ?? "无"}`,
+    `目标生成课程视觉手册|画风：${projectData?.artStyle ?? "无"}`,
+    `目标生成视频画幅：${projectData?.videoRatio ?? "16:9"}`,
+    `课程数量：${novelData.length}节`,
   ].join("\n");
 
   const { fullStream } = await u.Ai.Text("scriptAgent:decisionAgent", ctx.thinkConfig.think, ctx.thinkConfig.thinlLevel).stream({
@@ -139,13 +139,13 @@ function createSubAgent(parentCtx: AgentContext) {
     .toJSONSchema();
 
   const run_sub_agent_storySkeleton = tool({
-    description: "运行执行subAgent来完成故事骨架相关任务",
+    description: "运行执行subAgent来完成课程骨架相关任务",
     inputSchema: jsonSchema<{ prompt: string }>(promptInput),
     execute: async ({ prompt }) => {
       const skill = path.join(u.getPath("skills"), "script_execution_skeleton.md");
       const systemPrompt = await fs.promises.readFile(skill, "utf-8");
 
-      const formatPrompt = "\n你必须使用如下XML格式写入工作区：\n<storySkeleton>故事骨架内容</storySkeleton>";
+      const formatPrompt = "\n你必须使用如下XML格式写入工作区：\n<storySkeleton>课程骨架内容</storySkeleton>";
 
       return runAgent({
         key: "scriptAgent:storySkeletonAgent",
@@ -179,27 +179,27 @@ function createSubAgent(parentCtx: AgentContext) {
   });
 
   const run_sub_agent_script = tool({
-    description: "运行执行subAgent来完成剧本相关任务",
+    description: "运行执行subAgent来完成课程脚本相关任务",
     inputSchema: jsonSchema<{ prompt: string }>(promptInput),
     execute: async ({ prompt }) => {
       const skill = path.join(u.getPath("skills"), "script_execution_script.md");
       const systemPrompt = await fs.promises.readFile(skill, "utf-8");
 
       const scriptList = await u.db("o_script").where("projectId", resTool.data.projectId).select("id", "name");
-      const scriptPrompt = ["## 可用剧本(ID:名称)", scriptList.map((s: any) => `${s.id}:${(s.name || "").replace(/[,:]/g, "")}`).join(","), ""].join(
+      const scriptPrompt = ["## 可用课程脚本(ID:名称)", scriptList.map((s: any) => `${s.id}:${(s.name || "").replace(/[,:]/g, "")}`).join(","), ""].join(
         "\n",
       );
 
       const novelData = await u.db("o_novel").where("projectId", resTool.data.projectId).select("chapterIndex");
 
-      const formatPrompt = `\n你必须使用如下XML格式写入工作区：\nXML不得添加任何额外标签<scriptItem name="剧本名称">剧本内容</scriptItem><scriptItem name="剧本名称">剧本内容</scriptItem><scriptItem name="剧本名称">剧本内容</scriptItem>`;
+      const formatPrompt = `\n你必须使用如下XML格式写入工作区：\nXML不得添加任何额外标签<scriptItem name="课程脚本名称">课程脚本内容</scriptItem><scriptItem name="课程脚本名称">课程脚本内容</scriptItem><scriptItem name="课程脚本名称">课程脚本内容</scriptItem>`;
 
       return runAgent({
         key: "scriptAgent:scriptAgent",
         prompt,
         system: systemPrompt + formatPrompt,
         messages: [
-          { role: "assistant", content: scriptPrompt + `章节数量：${novelData.length}章` },
+          { role: "assistant", content: scriptPrompt + `课程数量：${novelData.length}节` },
           { role: "user", content: prompt + formatPrompt },
         ],
         name: "编剧",
