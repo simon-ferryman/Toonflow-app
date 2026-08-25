@@ -193,9 +193,9 @@ async function createSubAgent(parentCtx: AgentContext) {
   //   },
   // });
 
-  //衍生资产分析与信息写入
+  //教学素材分析与信息写入
   const run_sub_agent_derive_assets = tool({
-    description: "运行执行subAgent来完成衍生资产分析与信息写入相关任务",
+    description: "运行执行subAgent来完成教学素材分析与信息写入相关任务",
     inputSchema: jsonSchema<{ prompt: string }>(promptInput),
     execute: async ({ prompt }) => {
       const skill = path.join(u.getPath("skills"), "production_execution_derive_assets.md");
@@ -215,9 +215,9 @@ async function createSubAgent(parentCtx: AgentContext) {
     },
   });
 
-  //衍生资产图片生成
+  //教学素材图片生成
   const run_sub_agent_generate_assets = tool({
-    description: "运行执行subAgent来完成衍生资产图片生成相关任务",
+    description: "运行执行subAgent来完成教学素材图片生成相关任务",
     inputSchema: jsonSchema<{ prompt: string }>(promptInput),
     execute: async ({ prompt }) => {
       const skill = path.join(u.getPath("skills"), "production_execution_generate_assets.md");

@@ -5,30 +5,30 @@ import ResTool from "@/socket/resTool";
 import u from "@/utils";
 
 const deriveAssetSchema = z.object({
-  id: z.number().describe("衍生资产ID,如果新增则为空"),
-  assetsId: z.number().describe("关联的资产ID"),
-  prompt: z.string().describe("生成提示词"),
-  name: z.string().describe("衍生资产名称"),
-  desc: z.string().describe("衍生资产描述"),
-  src: z.string().nullable().describe("衍生资产资源路径"),
-  state: z.enum(["未生成", "生成中", "已完成", "生成失败"]).describe("衍生资产生成状态"),
-  type: z.enum(["role", "tool", "scene", "clip"]).describe("衍生资产类型"),
+  id: z.number().describe("教学衍生素材ID,如果新增则为空"),
+  assetsId: z.number().describe("关联的基础教学素材ID"),
+  prompt: z.string().describe("教学衍生素材生成提示词"),
+  name: z.string().describe("教学衍生素材名称"),
+  desc: z.string().describe("教学衍生素材描述，应说明该状态或步骤所表达的知识内容"),
+  src: z.string().nullable().describe("教学衍生素材资源路径"),
+  state: z.enum(["未生成", "生成中", "已完成", "生成失败"]).describe("教学衍生素材生成状态"),
+  type: z.enum(["role", "tool", "scene", "clip"]).describe("教学素材主类型：role为讲师或人物，tool为公式、图表、地图、示意图或实验器材，scene为教学或知识场景，clip为动画、屏幕录制或视频片段"),
 });
 export const assetItemSchema = z.object({
-  id: z.number().describe("资产唯一标识"),
-  name: z.string().describe("资产名称"),
-  type: z.enum(["role", "tool", "scene", "clip"]).describe("资产类型"),
-  prompt: z.string().describe("生成提示词"),
-  desc: z.string().describe("资产描述"),
-  derive: z.array(deriveAssetSchema).describe("衍生资产列表"),
+  id: z.number().describe("教学素材唯一标识"),
+  name: z.string().describe("教学素材名称"),
+  type: z.enum(["role", "tool", "scene", "clip"]).describe("教学素材主类型：role为讲师或人物，tool为公式、图表、地图、示意图或实验器材，scene为教学或知识场景，clip为动画、屏幕录制或视频片段"),
+  prompt: z.string().describe("教学素材生成提示词"),
+  desc: z.string().describe("教学素材描述，应说明素材呈现的内容及其教学用途"),
+  derive: z.array(deriveAssetSchema).describe("教学衍生素材列表"),
 });
 const storyboardSchema = z.object({
-  id: z.number().describe("分镜ID，必须为真实id"),
-  duration: z.number().describe("持续时长(秒)"),
-  prompt: z.string().describe("生成提示词"),
-  associateAssetsIds: z.array(z.number()).describe("关联资产ID列表"),
-  src: z.string().nullable().describe("分镜资源路径"),
-  index: z.number().nullable().optional().describe("分镜排序字段"),
+  id: z.number().describe("教学分镜ID，必须为真实id"),
+  duration: z.number().describe("教学分镜持续时长(秒)"),
+  prompt: z.string().describe("教学分镜图片生成提示词"),
+  associateAssetsIds: z.array(z.number()).describe("关联教学素材ID列表"),
+  src: z.string().nullable().describe("教学分镜资源路径"),
+  index: z.number().nullable().optional().describe("教学分镜排序字段"),
 });
 const workbenchDataSchema = z.object({
   name: z.string().describe("项目名称"),
@@ -43,11 +43,11 @@ const posterItemSchema = z.object({
   image: z.string().describe("海报图片路径"),
 });
 export const flowDataSchema = z.object({
-  script: z.string().describe("剧本内容"),
-  scriptPlan: z.string().describe("拍摄计划"),
-  assets: z.array(assetItemSchema).describe("衍生资产"),
-  storyboardTable: z.string().describe("分镜表"),
-  storyboard: z.array(storyboardSchema).describe("分镜面板"),
+  script: z.string().describe("课程讲解脚本"),
+  scriptPlan: z.string().describe("视觉教学方案"),
+  assets: z.array(assetItemSchema).describe("教学素材及衍生素材"),
+  storyboardTable: z.string().describe("教育视频分镜表"),
+  storyboard: z.array(storyboardSchema).describe("教学画面分镜面板"),
 });
 
 export type FlowData = z.infer<typeof flowDataSchema>;
@@ -87,7 +87,7 @@ export default (toolCpnfig: ToolConfig) => {
   const workMap: Record<any, any> = {};
   const tools: Record<string, Tool> = {
     get_flowData: tool({
-      description: "获取工作区数据",
+      description: "获取教育视频生产工作区数据",
       inputSchema: jsonSchema<{ key: keyof FlowData }>(
         z
           .object({
@@ -111,14 +111,14 @@ export default (toolCpnfig: ToolConfig) => {
       },
     }),
     add_deriveAsset: tool({
-      description: "新增或更新衍生资产",
+      description: "新增或更新教学衍生素材，例如公式推导状态、图表数据状态、地图标注状态、实验步骤或人物动作状态",
       inputSchema: jsonSchema<{ assetsId: number; id: number | null; name: string; desc: string }>(
         z
           .object({
-            assetsId: z.number().describe("关联的资产ID"),
-            id: z.number().nullable().describe("衍生资产ID,如果新增则为空"),
-            name: z.string().describe("衍生资产名称"),
-            desc: z.string().describe("衍生资产描述"),
+            assetsId: z.number().describe("关联的基础教学素材ID"),
+            id: z.number().nullable().describe("教学衍生素材ID,如果新增则为空"),
+            name: z.string().describe("教学衍生素材名称"),
+            desc: z.string().describe("教学衍生素材描述，应说明该状态或步骤所表达的知识内容"),
           })
           .toJSONSchema(),
       ),
@@ -128,11 +128,11 @@ export default (toolCpnfig: ToolConfig) => {
         const normalizedId = idRaw === "null" || idRaw === "" || idRaw === undefined ? null : (idRaw as number | null);
         const deriveAsset = { ...raw, id: normalizedId };
 
-        const thinking = msg.thinking("正在操作资产...");
+        const thinking = msg.thinking("正在操作教学素材...");
         const { projectId, scriptId } = resTool.data;
         const startTime = Date.now();
         const parentAssets = await u.db("o_assets").where("id", deriveAsset.assetsId).select("id", "type").first();
-        if (!parentAssets) return "关联的资产不存在";
+        if (!parentAssets) return "关联的资产素材不存在";
 
         const data = {
           id: deriveAsset.id ?? undefined,
@@ -145,78 +145,78 @@ export default (toolCpnfig: ToolConfig) => {
         };
         if (deriveAsset.id) {
           await u.db("o_assets").where("id", deriveAsset.id).update(data);
-          thinking.appendText(`已更新衍生资产，ID: ${deriveAsset.id}\n`);
+          thinking.appendText(`已更新教学衍生素材，ID: ${deriveAsset.id}\n`);
         } else {
           const [insertedId] = await u.db("o_assets").insert(data);
           data.id = insertedId;
           await u.db("o_scriptAssets").insert({ scriptId, assetId: insertedId });
-          thinking.appendText(`已新增衍生资产，ID: ${insertedId}\n`);
+          thinking.appendText(`已新增教学衍生素材，ID: ${insertedId}\n`);
         }
         const res = await new Promise((resolve) => socket.emit("addDeriveAsset", data, (res: any) => resolve(res)));
-        thinking.updateTitle("资产操作完成");
+        thinking.updateTitle("教学素材操作完成");
         thinking.complete();
         return res ?? "操作成功";
       },
     }),
     del_deriveAsset: tool({
-      description: "删除衍生资产",
+      description: "删除教学衍生素材",
       inputSchema: jsonSchema<{ assetsId: number; id: number }>(
         z
           .object({
-            assetsId: z.number().describe("关联的资产ID"),
-            id: z.number().describe("衍生资产ID"),
+            assetsId: z.number().describe("关联的基础教学素材ID"),
+            id: z.number().describe("教学衍生素材ID"),
           })
           .toJSONSchema(),
       ),
       execute: async ({ assetsId, id }) => {
-        const thinking = msg.thinking("正在操作资产...");
+        const thinking = msg.thinking("正在操作教学素材...");
         const { scriptId } = resTool.data;
         await u.db("o_assets").where("id", id).del();
         await u.db("o_scriptAssets").where({ scriptId, assetId: id }).del();
-        thinking.appendText(`已删除衍生资产，ID: ${id}\n`);
+        thinking.appendText(`已删除教学衍生素材，ID: ${id}\n`);
         const res = await new Promise((resolve) => socket.emit("delDeriveAsset", { assetsId, id }, (res: any) => resolve(res)));
-        thinking.updateTitle("资产操作完成");
+        thinking.updateTitle("教学素材操作完成");
         thinking.complete();
         return res ?? "删除成功";
       },
     }),
     generate_deriveAsset: tool({
-      description: "生成衍生资产图片",
+      description: "生成教学衍生素材图片",
       inputSchema: jsonSchema<{ ids: number[] }>(
         z
           .object({
-            ids: z.array(z.number()).describe("需要生成的 衍生资产ID"),
+            ids: z.array(z.number()).describe("需要生成的教学衍生素材ID"),
           })
           .toJSONSchema(),
       ),
       execute: async ({ ids }) => {
-        const thinking = msg.thinking("正在生成衍生资产...");
+        const thinking = msg.thinking("正在生成教学衍生素材...");
         new Promise((resolve) => socket.emit("generateDeriveAsset", { ids }, (res: any) => resolve(res)))
           .then((res) => {
-            thinking.appendText(`已生成衍生资产，ID: ${JSON.stringify(res, null, 2)}\n`);
-            thinking.updateTitle("衍生资产开始完成");
+            thinking.appendText(`已生成教学衍生素材，ID: ${JSON.stringify(res, null, 2)}\n`);
+            thinking.updateTitle("教学衍生素材开始完成");
             thinking.complete();
           })
           .catch((e) => {
-            thinking.appendText("衍生资产生成失败:\n" + u.error(e).message);
-            thinking.updateTitle("衍生资产生成失败");
+            thinking.appendText("教学衍生素材生成失败:\n" + u.error(e).message);
+            thinking.updateTitle("教学衍生素材生成失败");
             thinking.complete();
           });
 
-        return "开始生成衍生资产";
+        return "开始生成教学衍生素材";
       },
     }),
     generate_storyboard: tool({
-      description: "生成分镜图片",
+      description: "生成教学分镜图片",
       inputSchema: jsonSchema<{ ids: number[] }>(
         z
           .object({
-            ids: z.array(z.number()).describe("必须获取真实的分镜ID，支持批量生成"),
+            ids: z.array(z.number()).describe("必须获取真实的教学分镜ID，支持批量生成"),
           })
           .toJSONSchema(),
       ),
       execute: async ({ ids }) => {
-        const thinking = msg.thinking("正在生成分镜...");
+        const thinking = msg.thinking("正在生成教学分镜...");
         socketQueue(
           () =>
             new Promise((resolve, reject) =>
@@ -227,21 +227,21 @@ export default (toolCpnfig: ToolConfig) => {
             ),
         )
           .then((res) => {
-            thinking.appendText("生成的分镜数据:\n" + JSON.stringify(res, null, 2));
-            thinking.updateTitle("分镜生成完成");
+            thinking.appendText("生成的教学分镜数据:\n" + JSON.stringify(res, null, 2));
+            thinking.updateTitle("教学分镜生成完成");
             thinking.complete();
           })
           .catch((e) => {
-            thinking.appendText("分镜生成失败:\n" + u.error(e).message);
-            thinking.updateTitle("分镜生成失败");
+            thinking.appendText("教学分镜生成失败:\n" + u.error(e).message);
+            thinking.updateTitle("教学分镜生成失败");
             thinking.complete();
           });
 
-        return "开始生成分镜";
+        return "开始生成教学分镜";
       },
     }),
     add_flowData_storyboard: tool({
-      description: "新增分镜面板到工作区",
+      description: "新增教学画面分镜面板到工作区",
       inputSchema: jsonSchema<{
         videoDesc: string;
         prompt: string | null;
@@ -252,17 +252,17 @@ export default (toolCpnfig: ToolConfig) => {
       }>(
         z
           .object({
-            videoDesc: z.string().describe("画面描述、场景、关联资产名称、时长、景别、运镜、角色动作、情绪、光影氛围、台词、音效、关联资产ID"),
-            prompt: z.string().nullable().describe("分镜图片提示词"),
-            track: z.string().describe("分组"),
-            duration: z.number().describe("视频推荐时间"),
-            associateAssetsIds: z.array(z.number()).nullable().describe("该分镜所需的资产ID列表"),
-            shouldGenerateImage: z.enum(["true", "false"]).describe("是否需要生成分镜图片"),
+            videoDesc: z.string().describe("教学分镜完整描述，使用现有字符串承载学习目标、知识点、资料依据、旁白、屏幕文字、视觉目的、画面描述、场景、关联素材名称、时长、景别、运镜、音效和关联素材ID"),
+            prompt: z.string().nullable().describe("教学分镜图片提示词"),
+            track: z.string().describe("教学分镜分组"),
+            duration: z.number().describe("教学视频推荐时长"),
+            associateAssetsIds: z.array(z.number()).nullable().describe("该教学分镜所需的素材ID列表"),
+            shouldGenerateImage: z.enum(["true", "false"]).describe("是否需要生成教学分镜图片"),
           })
           .toJSONSchema(),
       ),
       execute: async (raw) => {
-        const thinking = msg.thinking("正在新增 分镜面板 数据...");
+        const thinking = msg.thinking("正在新增教学画面分镜面板数据...");
         const data = {
           videoDesc: raw.videoDesc,
           prompt: raw.prompt,
@@ -281,13 +281,13 @@ export default (toolCpnfig: ToolConfig) => {
             ),
         )
           .then((res) => {
-            thinking.appendText("新增的分镜数据:\n" + JSON.stringify(data, null, 2));
-            thinking.updateTitle("新增分镜成功");
+            thinking.appendText("新增的教学分镜数据:\n" + JSON.stringify(data, null, 2));
+            thinking.updateTitle("新增教学分镜成功");
             thinking.complete();
           })
           .catch((e) => {
-            thinking.appendText("新增的分镜数据:\n" + JSON.stringify(data, null, 2));
-            thinking.updateTitle("新增分镜失败");
+            thinking.appendText("新增的教学分镜数据:\n" + JSON.stringify(data, null, 2));
+            thinking.updateTitle("新增教学分镜失败");
             thinking.complete();
           });
         return true;

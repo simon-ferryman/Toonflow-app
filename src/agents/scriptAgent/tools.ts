@@ -5,13 +5,13 @@ import _ from "lodash";
 import ResTool from "@/socket/resTool";
 
 export const ScriptSchema = z.object({
-  name: z.string().describe("剧本名称"),
-  content: z.string().describe("剧本内容"),
+  name: z.string().describe("课程名称"),
+  content: z.string().describe("课程内容"),
 });
 export const planData = z.object({
-  storySkeleton: z.string().describe("故事骨架"),
-  adaptationStrategy: z.string().describe("改编策略"),
-  script: z.string().describe("剧本内容"),
+  storySkeleton: z.string().describe("知识大纲骨架"),
+  adaptationStrategy: z.string().describe("教学策略"),
+  script: z.string().describe("课程脚本"),
 });
 
 export type planData = z.infer<typeof planData>;
@@ -32,26 +32,26 @@ export default (toolCpnfig: ToolConfig) => {
   const { socket } = resTool;
   const tools: Record<string, Tool> = {
     get_novel_events: tool({
-      description: "获取章节事件",
+      description: "获取知识点事件",
       inputSchema: jsonSchema<{ chapterIndexs: number[] }>(
         z
           .object({
-            chapterIndexs: z.array(z.number()).describe("章节的编号"),
+            chapterIndexs: z.array(z.number()).describe("知识点的编号"),
           })
           .toJSONSchema(),
       ),
       execute: async ({ chapterIndexs }) => {
         console.log("[tools] get_novel_events", chapterIndexs);
-        const thinking = msg.thinking("正在查询章节事件...");
+        const thinking = msg.thinking("正在查询知识点事件...");
         const data = await u
           .db("o_novel")
           .where("projectId", resTool.data.projectId)
           .select("id", "chapterIndex as index", "reel", "chapter", "chapterData", "event", "eventState")
           .whereIn("chapterIndex", chapterIndexs);
-        thinking.appendText("正在查询章节编号: " + chapterIndexs.join(","));
-        const eventString = data.map((i: any) => [`第${i.index}章，标题:${i.chapter}，事件:${i.event}`].join("\n")).join("\n");
+        thinking.appendText("正在查询知识点编号: " + chapterIndexs.join(","));
+        const eventString = data.map((i: any) => [`第${i.index}个，标题:${i.chapter}，事件:${i.event}`].join("\n")).join("\n");
         thinking.appendText("查询结果:\n" + eventString);
-        thinking.updateTitle("查询章节事件完成");
+        thinking.updateTitle("查询知识点事件完成");
         thinking.complete();
         return eventString ?? "无数据";
       },
@@ -76,27 +76,27 @@ export default (toolCpnfig: ToolConfig) => {
       },
     }),
     get_novel_text: tool({
-      description: "获取小说章节原始文本内容",
+      description: "获取教材或知识资料文本内容",
       inputSchema: jsonSchema<{ chapterIndex: string }>(
         z
           .object({
-            chapterIndex: z.string().describe("章节编号"),
+            chapterIndex: z.string().describe("文本编号"),
           })
           .toJSONSchema(),
       ),
       execute: async ({ chapterIndex }) => {
         console.log("[tools] get_novel_text", "[tools] get_novel_text", chapterIndex);
-        const thinking = msg.thinking(`正在获取小说章节原文...`);
+        const thinking = msg.thinking(`正在获取教材或知识资料文本...`);
         const data = await u.db("o_novel").where("projectId", resTool.data.projectId).where({ chapterIndex }).select("chapterData").first();
         const text = data && data?.chapterData ? data.chapterData : "";
         thinking.appendText(`获取到原文:\n` + text);
-        thinking.updateTitle(`获取小说章节原文完成`);
+        thinking.updateTitle(`获取教材或知识资料文本完成`);
         thinking.complete();
         return text ?? "无数据";
       },
     }),
     get_script_content: tool({
-      description: "获取剧本本内容",
+      description: "获取课程脚本内容",
       inputSchema: jsonSchema<{ ids: string[] }>(
         z
           .object({
@@ -106,11 +106,11 @@ export default (toolCpnfig: ToolConfig) => {
       ),
       execute: async ({ ids }) => {
         console.log("[tools] get_script_content", "[tools] get_script_content", ids);
-        const thinking = msg.thinking(`正在获取脚本内容...`);
+        const thinking = msg.thinking(`正在获取课程脚本内容...`);
         const data = await u.db("o_script").whereIn("id", ids).select("content", "name");
         const text = data && data.length ? data.map((d) => `<scriptItem name="${d.name}">${d.content}</scriptItem>`).join("\n") : "";
-        thinking.appendText(`获取到脚本内容:\n` + JSON.stringify(data, null, 2));
-        thinking.updateTitle(`获取脚本内容完成`);
+        thinking.appendText(`获取到课程脚本内容:\n` + JSON.stringify(data, null, 2));
+        thinking.updateTitle(`获取课程脚本内容完成`);
         thinking.complete();
         return text ?? "无数据";
       },
